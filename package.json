@@ -1,6 +1,6 @@
 {
   "name": "cli-contracts",
-  "version": "0.34.1",
+  "version": "0.34.2",
   "description": "Contract-first specification and toolchain for command line interfaces",
   "type": "module",
   "main": "dist/index.js",
@@ -89,6 +89,9 @@
     "yaml": "^2.9.0",
     "zod": "^4.4.3",
     "zod-to-json-schema": "^3.24.5"
+  },
+  "overrides": {
+    "@hono/node-server": "^2.0.5"
   },
   "engines": {
     "node": ">=20.0.0"
