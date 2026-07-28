@@ -231,8 +231,9 @@ command_sets:
     const program = output["program.ts"];
 
     expect(program).toContain("newArg");
-    // Action params and handler call should use newArg, not bare `new`
-    expect(program).toContain("(old, newArg, opts, cmd)");
+    // Action params and handler call should use newArg, not bare `new`.
+    // The command declares no options, so opts is unread and emitted as _opts.
+    expect(program).toContain("(old, newArg, _opts, cmd)");
     expect(program).toContain("handlers.compare(old, newArg,");
   });
 
