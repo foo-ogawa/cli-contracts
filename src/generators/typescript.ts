@@ -341,7 +341,7 @@ function generateAllOfSchemaType(
   lines: string[],
 ): void {
   const bases: string[] = [];
-  const ownProps: { key: string; optional: boolean; tsType: string }[] = [];
+  const ownProps = new Map<string, { optional: boolean; tsTypes: string[] }>();
 
   for (const sub of allOf) {
     if (sub.$ref) {
@@ -349,23 +349,32 @@ function generateAllOfSchemaType(
     } else if (sub.type === "object" && sub.properties) {
       const required = new Set(sub.required ?? []);
       for (const [key, propSchema] of Object.entries(sub.properties)) {
-        ownProps.push({
-          key,
-          optional: !required.has(key),
-          tsType: jsonSchemaToTs(propSchema),
-        });
+        const tsType = jsonSchemaToTs(propSchema);
+        const merged = ownProps.get(key);
+        if (!merged) {
+          ownProps.set(key, { optional: !required.has(key), tsTypes: [tsType] });
+          continue;
+        }
+        // Every allOf branch has to hold at once, so a property required by
+        // any branch is required and differing types intersect.
+        merged.optional = merged.optional && !required.has(key);
+        if (!merged.tsTypes.includes(tsType)) merged.tsTypes.push(tsType);
       }
     } else {
       bases.push(jsonSchemaToTs(sub));
     }
   }
 
-  if (ownProps.length > 0) {
+  if (ownProps.size > 0) {
     const extendsClause = bases.length > 0 ? ` extends ${bases.join(", ")}` : "";
     lines.push(`export interface ${name}${extendsClause} {`);
-    for (const p of ownProps) {
-      const opt = p.optional ? "?" : "";
-      lines.push(`  ${p.key}${opt}: ${p.tsType};`);
+    for (const [key, prop] of ownProps) {
+      const opt = prop.optional ? "?" : "";
+      const tsType =
+        prop.tsTypes.length === 1
+          ? prop.tsTypes[0]
+          : prop.tsTypes.map((t) => `(${t})`).join(" & ");
+      lines.push(`  ${key}${opt}: ${tsType};`);
     }
     lines.push("}");
     lines.push("");
@@ -691,9 +700,13 @@ function generateProgramCommand(
   }
 
   const argSafeNames = cmd.arguments.map((a) => safeIdentifier(a.name));
-  const actionParams = [...argSafeNames];
-  actionParams.push("opts");
-  actionParams.push("cmd");
+  const isLlm = commandIsLlmPowered(cmd);
+  const hasOpts = cmd.options.length > 0 || isLlm;
+  // commander passes (...args, opts, cmd) positionally, so opts stays declared
+  // even when the body reads nothing from it. Underscore keeps that declaration
+  // out of the way of the consumer's noUnusedParameters.
+  const optsParam = hasOpts || hasEffects ? "opts" : "_opts";
+  const actionParams = [...argSafeNames, optsParam, "cmd"];
 
   lines.push(
     `    .action(async (${actionParams.join(", ")}) => {`,
@@ -708,8 +721,6 @@ function generateProgramCommand(
     lines.push("      }");
   }
 
-  const isLlm = commandIsLlmPowered(cmd);
-  const hasOpts = cmd.options.length > 0 || isLlm;
   const callArgs = [
     ...argSafeNames,
     hasOpts ? "opts" : "{}",
@@ -927,7 +938,7 @@ function generateBuiltinExtractCommand(
   lines.push('    .option("-a, --all", "Extract all commands.", false)');
   lines.push('    .option("--include-meta", "Include extraction metadata.", true)');
   lines.push('    .option("-F, --format <format>", "Output format (yaml or json).", "yaml")');
-  lines.push("    .action(async (commands: string[], opts: { all?: boolean; includeMeta?: boolean; format?: string }, cmd: Command) => {");
+  lines.push("    .action(async (commands: string[], opts: { all?: boolean; includeMeta?: boolean; format?: string }) => {");
   lines.push("      if (commands.length === 0 && !opts.all) {");
   lines.push('        process.stderr.write(JSON.stringify({ code: "INVALID_ARGS", message: "Specify command IDs or use --all" }) + "\\n");');
   lines.push("        process.exit(2);");

@@ -1,0 +1,100 @@
+cli_contracts: 0.1.0
+
+info:
+  title: Strict Typecheck CLI
+  version: 1.0.0
+  description: Contract whose generated TypeScript is compiled under a strict consumer tsconfig.
+
+command_sets:
+  strict-cli:
+    summary: Strict typecheck CLI tool.
+    executable: strict-cli
+
+    commands:
+      # No options and no arguments: the action receives opts it never reads.
+      check:
+        summary: Verify local state.
+        exits:
+          '0':
+            description: Success.
+            stdout:
+              format: text
+
+      # Argument but no options: the action still receives an unread opts.
+      show:
+        summary: Show one record.
+        arguments:
+          - name: id
+            index: 0
+            required: true
+            description: Record id.
+            schema:
+              type: string
+        exits:
+          '0':
+            description: Success.
+            stdout:
+              format: text
+
+      propose:
+        summary: Propose a phased change.
+        options:
+          - name: dry-run
+            aliases: [n]
+            description: Do not write anything.
+            schema:
+              type: boolean
+              default: false
+        exits:
+          '0':
+            description: Success.
+            stdout:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Proposal'
+
+components:
+  schemas:
+    BaseResult:
+      type: object
+      required: [summary, riskLevel]
+      properties:
+        summary:
+          type: string
+          description: One-line summary.
+        riskLevel:
+          type: string
+          enum: [low, medium, high, critical]
+          description: Risk level.
+        notes:
+          type: string
+          description: Free-form notes.
+
+    # An allOf branch that re-declares base properties to document them for
+    # this command. Every branch is an anonymous object once refs are resolved.
+    Proposal:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/BaseResult'
+        - type: object
+          required: [phases]
+          properties:
+            summary:
+              type: string
+              description: Overview of the proposed decomposition.
+            riskLevel:
+              type: string
+              enum: [low, medium, high, critical]
+              description: Risk level of the original change.
+            phases:
+              type: array
+              items:
+                type: object
+                required: [name, sql]
+                properties:
+                  name:
+                    type: string
+                    enum: [expand, contract]
+                  sql:
+                    type: string
+              description: Ordered list of phases.
