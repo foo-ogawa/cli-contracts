@@ -35,6 +35,30 @@ export async function cliContractsInit(
   }
 }
 
+export async function cliContractsVersionSync(
+  executable: string,
+  options?: Partial<import("./types.js").VersionSyncOptions>,
+): Promise<ExecResult> {
+  const cmdArgs: string[] = ["version-sync"];
+  if (options) {
+    if (options.file !== undefined) cmdArgs.push("--file", String(options.file));
+    if (options.packageFile !== undefined) cmdArgs.push("--package-file", String(options.packageFile));
+    if (options.check) cmdArgs.push("--check");
+  }
+
+  try {
+    const result = await execFileAsync(executable, cmdArgs);
+    return { exitCode: 0, stdout: result.stdout, stderr: result.stderr };
+  } catch (err: unknown) {
+    const e = err as { code?: number; stdout?: string; stderr?: string };
+    return {
+      exitCode: typeof e.code === 'number' ? e.code : 1,
+      stdout: e.stdout ?? '',
+      stderr: e.stderr ?? '',
+    };
+  }
+}
+
 export async function cliContractsValidate(
   executable: string,
   options?: Partial<import("./types.js").ValidateOptions>,

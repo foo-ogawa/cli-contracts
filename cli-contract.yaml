@@ -2,7 +2,7 @@ cli_contracts: 0.1.0
 
 info:
   title: CLI Contracts CLI
-  version: 0.6.0
+  version: 0.34.5
   description: >-
     Contract definition for the cli-contracts command line tool itself.
     This is a self-referential contract: cli-contracts defines its own interface
@@ -201,6 +201,83 @@ command_sets:
               schema:
                 $ref: '#/components/schemas/Error'
 
+
+      # ── version-sync ────────────────────────────────────
+      version-sync:
+        summary: Synchronize info.version with the package version.
+        description: >-
+          Writes the version field of package.json into info.version of each
+          contract file from config input.files, rewriting only that one line so
+          the rest of the file keeps its formatting and comments. Runs as a
+          plain command, so it works where npm lifecycle scripts are disabled by
+          ignore-scripts.
+        usage:
+          - cli-contracts version-sync
+          - cli-contracts version-sync --check
+          - cli-contracts version-sync --file cli-contract.yaml --package-file package.json
+
+        options:
+          - name: file
+            aliases: [f]
+            description: Contract file(s) to synchronize. Defaults to config input.files.
+            value_name: file
+            repeatable: true
+            schema:
+              type: string
+            file:
+              mode: write
+              media_type: application/yaml
+              encoding: utf-8
+
+          - name: package-file
+            description: Package manifest to read the version from.
+            value_name: path
+            schema:
+              type: string
+              default: package.json
+            file:
+              mode: read
+              exists: true
+              media_type: application/json
+              encoding: utf-8
+
+          - name: check
+            description: Compare only and exit 9 when a contract file is out of sync.
+            schema:
+              type: boolean
+              default: false
+
+        exits:
+          '0':
+            description: Contract files are in sync, or were updated.
+            stdout:
+              format: yaml
+              schema:
+                $ref: '#/components/schemas/VersionSyncResult'
+
+          '1':
+            description: Unexpected error.
+            stderr:
+              format: json
+              schema:
+                $ref: '#/components/schemas/Error'
+
+          '9':
+            description: A contract file is out of sync (--check only).
+            stdout:
+              format: yaml
+              schema:
+                $ref: '#/components/schemas/VersionSyncResult'
+
+        x-agent:
+          riskLevel: low
+          requiresConfirmation: false
+          idempotent: true
+          sideEffects: [file_write]
+          sideEffectNote: >-
+            Rewrites the info.version line of each contract file. --check makes
+            the command read-only.
+          safeDryRunOption: check
 
       # ── validate ────────────────────────────────────────
       validate:
@@ -2088,6 +2165,44 @@ components:
         configFile:
           type: string
           description: Path to the generated cli-contracts.config.yaml (if --with-config).
+
+    VersionSyncResult:
+      type: object
+      required: [packageVersion, checked, inSync, files]
+      properties:
+        packageVersion:
+          type: string
+          description: Version read from the package manifest.
+        checked:
+          type: boolean
+          description: True when --check was set, so no file was written.
+        inSync:
+          type: boolean
+          description: True when every contract file already declared this version.
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/VersionSyncFile'
+
+    VersionSyncFile:
+      type: object
+      required: [file, contractVersion, packageVersion, status]
+      properties:
+        file:
+          type: string
+          description: Contract file path.
+        contractVersion:
+          type: string
+          description: info.version as found in the contract file.
+        packageVersion:
+          type: string
+          description: Version read from the package manifest.
+        status:
+          type: string
+          enum: [in-sync, updated, out-of-sync]
+          description: >-
+            in-sync when the versions already matched, updated when the file was
+            rewritten, out-of-sync when --check found a difference.
 
     ValidateResult:
       type: object

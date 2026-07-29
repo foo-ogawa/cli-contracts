@@ -27,6 +27,8 @@ jobs:
         run: npm run lint --if-present
       - name: Build
         run: npm run build
+      - name: Verify contract version matches the package version
+        run: node dist/cli.js version-sync --check
       - name: Test
         run: npm run test:ci
       - name: Verify package contents

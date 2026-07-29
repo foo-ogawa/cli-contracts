@@ -6,6 +6,7 @@ import type { CommandHandlers } from "./generated/program.js";
 import { loadConfig, getContractFiles } from "./config.js";
 import { runInit, FileExistsError } from "./commands/init.js";
 import { runValidate } from "./commands/validate.js";
+import { runVersionSync } from "./commands/version-sync.js";
 import { runResolve } from "./commands/resolve.js";
 import { runGenerate } from "./commands/generate.js";
 import { runDocs } from "./commands/docs.js";
@@ -52,6 +53,28 @@ const handlers: CommandHandlers = {
         writeError("FILE_EXISTS", err.message);
         process.exit(4);
       }
+      writeError("UNEXPECTED", (err as Error).message);
+      process.exit(1);
+    }
+  },
+
+  async versionSync(options, parentOpts) {
+    const fmt = getFormat(parentOpts);
+    try {
+      const configResult = await loadConfig(
+        parentOpts.config as string | undefined,
+      );
+      const fileOpt = options.file as unknown as string[] | undefined;
+      const files = fileOpt && fileOpt.length > 0
+        ? fileOpt
+        : getContractFiles(configResult?.config);
+      const result = await runVersionSync(files, {
+        check: options.check,
+        packageFile: options.packageFile,
+      });
+      writeOut(result, fmt);
+      process.exit(result.checked && !result.inSync ? 9 : 0);
+    } catch (err) {
       writeError("UNEXPECTED", (err as Error).message);
       process.exit(1);
     }

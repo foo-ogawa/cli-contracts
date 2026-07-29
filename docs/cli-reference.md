@@ -2,12 +2,13 @@
 
 Contract definition for the cli-contracts command line tool itself. This is a self-referential contract: cli-contracts defines its own interface using the CLI Contracts specification.
 
-**Version:** 0.6.0
+**Version:** 0.34.5
 
 ## Table of Contents
 
 - [cli-contracts](#cli-contracts)
   - [init](#cli-contracts-init)
+  - [version-sync](#cli-contracts-version-sync)
   - [validate](#cli-contracts-validate)
   - [resolve](#cli-contracts-resolve)
   - [generate](#cli-contracts-generate)
@@ -225,6 +226,248 @@ cli-contracts init --name foo --multi-command-set
   ```
 
   </details>
+
+---
+
+### version-sync
+
+Synchronize info.version with the package version.
+
+Writes the version field of package.json into info.version of each contract file from config input.files, rewriting only that one line so the rest of the file keeps its formatting and comments. Runs as a plain command, so it works where npm lifecycle scripts are disabled by ignore-scripts.
+
+**Usage:**
+
+```
+cli-contracts version-sync
+```
+```
+cli-contracts version-sync --check
+```
+```
+cli-contracts version-sync --file cli-contract.yaml --package-file package.json
+```
+
+#### Options
+
+| Option | Aliases | Required | Default | Description |
+|---|---|---|---|---|
+| `--file` | -f | No |  | Contract file(s) to synchronize. Defaults to config input.files. |
+| `--package-file` |  | No | `"package.json"` | Package manifest to read the version from. |
+| `--check` |  | No | `false` | Compare only and exit 9 when a contract file is out of sync. |
+
+#### Exit Codes
+
+**Exit 0:** Contract files are in sync, or were updated.
+
+- **stdout:** format=`yaml`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `packageVersion` | `string` | Yes | Version read from the package manifest. |
+  | `checked` | `boolean` | Yes | True when --check was set, so no file was written. |
+  | `inSync` | `boolean` | Yes | True when every contract file already declared this version. |
+  | `files` | `object[]` | Yes |  |
+  | `files[].file` | `string` | Yes | Contract file path. |
+  | `files[].contractVersion` | `string` | Yes | info.version as found in the contract file. |
+  | `files[].packageVersion` | `string` | Yes | Version read from the package manifest. |
+  | `files[].status` | `"in-sync" \| "updated" \| "out-of-sync"` | Yes | in-sync when the versions already matched, updated when the file was rewritten, out-of-sync when --check found a difference. |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "packageVersion",
+      "checked",
+      "inSync",
+      "files"
+    ],
+    "properties": {
+      "packageVersion": {
+        "type": "string",
+        "description": "Version read from the package manifest."
+      },
+      "checked": {
+        "type": "boolean",
+        "description": "True when --check was set, so no file was written."
+      },
+      "inSync": {
+        "type": "boolean",
+        "description": "True when every contract file already declared this version."
+      },
+      "files": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "file",
+            "contractVersion",
+            "packageVersion",
+            "status"
+          ],
+          "properties": {
+            "file": {
+              "type": "string",
+              "description": "Contract file path."
+            },
+            "contractVersion": {
+              "type": "string",
+              "description": "info.version as found in the contract file."
+            },
+            "packageVersion": {
+              "type": "string",
+              "description": "Version read from the package manifest."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "in-sync",
+                "updated",
+                "out-of-sync"
+              ],
+              "description": "in-sync when the versions already matched, updated when the file was rewritten, out-of-sync when --check found a difference."
+            }
+          }
+        }
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 1:** Unexpected error.
+
+- **stderr:** format=`json`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `code` | `string` | Yes |  |
+  | `message` | `string` | Yes |  |
+  | `details` | `Record<string, any>` | No |  |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "code",
+      "message"
+    ],
+    "properties": {
+      "code": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "details": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+  ```
+
+  </details>
+
+**Exit 9:** A contract file is out of sync (--check only).
+
+- **stdout:** format=`yaml`
+
+  | Property | Type | Required | Description |
+  |---|---|---|---|
+  | `packageVersion` | `string` | Yes | Version read from the package manifest. |
+  | `checked` | `boolean` | Yes | True when --check was set, so no file was written. |
+  | `inSync` | `boolean` | Yes | True when every contract file already declared this version. |
+  | `files` | `object[]` | Yes |  |
+  | `files[].file` | `string` | Yes | Contract file path. |
+  | `files[].contractVersion` | `string` | Yes | info.version as found in the contract file. |
+  | `files[].packageVersion` | `string` | Yes | Version read from the package manifest. |
+  | `files[].status` | `"in-sync" \| "updated" \| "out-of-sync"` | Yes | in-sync when the versions already matched, updated when the file was rewritten, out-of-sync when --check found a difference. |
+
+  <details>
+  <summary>JSON Schema</summary>
+
+  ```json
+  {
+    "type": "object",
+    "required": [
+      "packageVersion",
+      "checked",
+      "inSync",
+      "files"
+    ],
+    "properties": {
+      "packageVersion": {
+        "type": "string",
+        "description": "Version read from the package manifest."
+      },
+      "checked": {
+        "type": "boolean",
+        "description": "True when --check was set, so no file was written."
+      },
+      "inSync": {
+        "type": "boolean",
+        "description": "True when every contract file already declared this version."
+      },
+      "files": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "file",
+            "contractVersion",
+            "packageVersion",
+            "status"
+          ],
+          "properties": {
+            "file": {
+              "type": "string",
+              "description": "Contract file path."
+            },
+            "contractVersion": {
+              "type": "string",
+              "description": "info.version as found in the contract file."
+            },
+            "packageVersion": {
+              "type": "string",
+              "description": "Version read from the package manifest."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "in-sync",
+                "updated",
+                "out-of-sync"
+              ],
+              "description": "in-sync when the versions already matched, updated when the file was rewritten, out-of-sync when --check found a difference."
+            }
+          }
+        }
+      }
+    }
+  }
+  ```
+
+  </details>
+
+#### Extensions
+
+```yaml
+x-agent:
+  riskLevel: low
+  requiresConfirmation: false
+  idempotent: true
+  sideEffects:
+    - file_write
+  sideEffectNote: Rewrites the info.version line of each contract file. --check makes the command read-only.
+  safeDryRunOption: check
+```
 
 ---
 
@@ -7436,6 +7679,138 @@ Type: `object`
     "configFile": {
       "type": "string",
       "description": "Path to the generated cli-contracts.config.yaml (if --with-config)."
+    }
+  }
+}
+```
+
+</details>
+
+### VersionSyncResult
+
+Type: `object`
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `packageVersion` | `string` | Yes | Version read from the package manifest. |
+| `checked` | `boolean` | Yes | True when --check was set, so no file was written. |
+| `inSync` | `boolean` | Yes | True when every contract file already declared this version. |
+| `files` | `object[]` | Yes |  |
+| `files[].file` | `string` | Yes | Contract file path. |
+| `files[].contractVersion` | `string` | Yes | info.version as found in the contract file. |
+| `files[].packageVersion` | `string` | Yes | Version read from the package manifest. |
+| `files[].status` | `"in-sync" \| "updated" \| "out-of-sync"` | Yes | in-sync when the versions already matched, updated when the file was rewritten, out-of-sync when --check found a difference. |
+
+<details>
+<summary>JSON Schema</summary>
+
+```json
+{
+  "type": "object",
+  "required": [
+    "packageVersion",
+    "checked",
+    "inSync",
+    "files"
+  ],
+  "properties": {
+    "packageVersion": {
+      "type": "string",
+      "description": "Version read from the package manifest."
+    },
+    "checked": {
+      "type": "boolean",
+      "description": "True when --check was set, so no file was written."
+    },
+    "inSync": {
+      "type": "boolean",
+      "description": "True when every contract file already declared this version."
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "file",
+          "contractVersion",
+          "packageVersion",
+          "status"
+        ],
+        "properties": {
+          "file": {
+            "type": "string",
+            "description": "Contract file path."
+          },
+          "contractVersion": {
+            "type": "string",
+            "description": "info.version as found in the contract file."
+          },
+          "packageVersion": {
+            "type": "string",
+            "description": "Version read from the package manifest."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "in-sync",
+              "updated",
+              "out-of-sync"
+            ],
+            "description": "in-sync when the versions already matched, updated when the file was rewritten, out-of-sync when --check found a difference."
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+</details>
+
+### VersionSyncFile
+
+Type: `object`
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `file` | `string` | Yes | Contract file path. |
+| `contractVersion` | `string` | Yes | info.version as found in the contract file. |
+| `packageVersion` | `string` | Yes | Version read from the package manifest. |
+| `status` | `"in-sync" \| "updated" \| "out-of-sync"` | Yes | in-sync when the versions already matched, updated when the file was rewritten, out-of-sync when --check found a difference. |
+
+<details>
+<summary>JSON Schema</summary>
+
+```json
+{
+  "type": "object",
+  "required": [
+    "file",
+    "contractVersion",
+    "packageVersion",
+    "status"
+  ],
+  "properties": {
+    "file": {
+      "type": "string",
+      "description": "Contract file path."
+    },
+    "contractVersion": {
+      "type": "string",
+      "description": "info.version as found in the contract file."
+    },
+    "packageVersion": {
+      "type": "string",
+      "description": "Version read from the package manifest."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "in-sync",
+        "updated",
+        "out-of-sync"
+      ],
+      "description": "in-sync when the versions already matched, updated when the file was rewritten, out-of-sync when --check found a difference."
     }
   }
 }

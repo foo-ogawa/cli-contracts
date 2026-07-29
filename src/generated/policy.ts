@@ -53,6 +53,53 @@ export const commandDefinitions = {
       }
     }
   },
+  "version-sync": {
+    "options": [
+      {
+        "name": "file",
+        "schema": {
+          "type": "string"
+        },
+        "file": {
+          "mode": "write",
+          "media_type": "application/yaml",
+          "encoding": "utf-8"
+        },
+        "repeatable": true
+      },
+      {
+        "name": "package-file",
+        "schema": {
+          "type": "string",
+          "default": "package.json"
+        },
+        "file": {
+          "mode": "read",
+          "exists": true,
+          "media_type": "application/json",
+          "encoding": "utf-8"
+        }
+      },
+      {
+        "name": "check",
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    ],
+    "env": {
+      "GEMINI_API_KEY": {
+        "sensitive": true
+      },
+      "OPENAI_API_KEY": {
+        "sensitive": true
+      },
+      "ANTHROPIC_API_KEY": {
+        "sensitive": true
+      }
+    }
+  },
   "validate": {
     "options": [
       {
