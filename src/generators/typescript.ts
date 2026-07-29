@@ -664,10 +664,22 @@ function generateProgramCommand(
   const state = registrationState ?? { createdPrefixes: new Set(), groups: {} };
   const receiver =
     path.length === 1 ? "program" : ensureCommandAncestors(path, state, lines);
-  const commandName = path[path.length - 1]!;
+  // An empty path means the command is invoked without a subcommand name.
+  // commander still needs a name to register it under, so the command id
+  // supplies one and the registration carries isDefault so it runs when no
+  // subcommand is given, and hidden so help keeps advertising the bare form.
+  const isDefaultCommand = path.length === 0;
+  const nameSegments = isDefaultCommand ? cmd.id.split(".") : path;
+  const commandName = nameSegments[nameSegments.length - 1];
+  if (commandName === undefined || commandName === "") {
+    throw new Error(`Command ${cmd.id} has no name to register`);
+  }
+  const commandArgs = isDefaultCommand
+    ? `${JSON.stringify(commandName)}, { isDefault: true, hidden: true }`
+    : JSON.stringify(commandName);
 
   lines.push(`  ${receiver}`);
-  lines.push(`    .command(${JSON.stringify(commandName)})`);
+  lines.push(`    .command(${commandArgs})`);
   lines.push(`    .description(${JSON.stringify(cmd.summary)})`);
 
   // Arguments

@@ -20,6 +20,29 @@ command_sets:
             stdout:
               format: text
 
+      # Empty path: invoked as `strict-cli <input>` with no subcommand name.
+      render:
+        summary: Render one input.
+        path: []
+        arguments:
+          - name: input
+            index: 0
+            required: false
+            description: Input file.
+            schema:
+              type: string
+        options:
+          - name: output
+            aliases: [o]
+            description: Output path.
+            schema:
+              type: string
+        exits:
+          '0':
+            description: Success.
+            stdout:
+              format: text
+
       # Argument but no options: the action still receives an unread opts.
       show:
         summary: Show one record.
