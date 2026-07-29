@@ -116,6 +116,20 @@ export interface ValidateResult {
   warnings: Diagnostic[];
 }
 
+export interface VersionSyncFile {
+  file: string;
+  contractVersion: string;
+  packageVersion: string;
+  status: "in-sync" | "updated" | "out-of-sync";
+}
+
+export interface VersionSyncResult {
+  packageVersion: string;
+  checked: boolean;
+  inSync: boolean;
+  files: VersionSyncFile[];
+}
+
 // ─── Generator Result Types ─────────────────────────────────────
 
 export interface GeneratorOutput {

@@ -36,6 +36,96 @@ export const schemas = {
       }
     }
   },
+  VersionSyncResult: {
+    "type": "object",
+    "required": [
+      "packageVersion",
+      "checked",
+      "inSync",
+      "files"
+    ],
+    "properties": {
+      "packageVersion": {
+        "type": "string",
+        "description": "Version read from the package manifest."
+      },
+      "checked": {
+        "type": "boolean",
+        "description": "True when --check was set, so no file was written."
+      },
+      "inSync": {
+        "type": "boolean",
+        "description": "True when every contract file already declared this version."
+      },
+      "files": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "file",
+            "contractVersion",
+            "packageVersion",
+            "status"
+          ],
+          "properties": {
+            "file": {
+              "type": "string",
+              "description": "Contract file path."
+            },
+            "contractVersion": {
+              "type": "string",
+              "description": "info.version as found in the contract file."
+            },
+            "packageVersion": {
+              "type": "string",
+              "description": "Version read from the package manifest."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "in-sync",
+                "updated",
+                "out-of-sync"
+              ],
+              "description": "in-sync when the versions already matched, updated when the file was rewritten, out-of-sync when --check found a difference."
+            }
+          }
+        }
+      }
+    }
+  },
+  VersionSyncFile: {
+    "type": "object",
+    "required": [
+      "file",
+      "contractVersion",
+      "packageVersion",
+      "status"
+    ],
+    "properties": {
+      "file": {
+        "type": "string",
+        "description": "Contract file path."
+      },
+      "contractVersion": {
+        "type": "string",
+        "description": "info.version as found in the contract file."
+      },
+      "packageVersion": {
+        "type": "string",
+        "description": "Version read from the package manifest."
+      },
+      "status": {
+        "type": "string",
+        "enum": [
+          "in-sync",
+          "updated",
+          "out-of-sync"
+        ],
+        "description": "in-sync when the versions already matched, updated when the file was rewritten, out-of-sync when --check found a difference."
+      }
+    }
+  },
   ValidateResult: {
     "type": "object",
     "required": [
@@ -588,6 +678,7 @@ export const schemas = {
 } as const;
 
 export const initExitCodes = [0, 1, 2, 4] as const;
+export const versionSyncExitCodes = [0, 1, 9] as const;
 export const validateExitCodes = [0, 1, 2, 9] as const;
 export const resolveExitCodes = [0, 1, 2] as const;
 export const generateExitCodes = [0, 1, 2, 3, 5] as const;

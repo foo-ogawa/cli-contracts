@@ -4,6 +4,7 @@ import { commandDefinitions, deriveCommandPolicy } from "./policy.js";
 
 export interface CommandHandlers {
   init: (options: { name?: string; multiCommandSet?: boolean; output?: string; withConfig?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
+  versionSync: (options: { file?: string; packageFile?: string; check?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
   validate: (options: { file?: string; strict?: boolean; resolveRefs?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
   resolve: (options: { file?: string; format?: string }, parentOpts: Record<string, unknown>) => Promise<void>;
   generate: (generators: string[], options: { file?: string; output?: string; dryRun?: boolean; clean?: boolean }, parentOpts: Record<string, unknown>) => Promise<void>;
@@ -52,6 +53,22 @@ export function createProgram(
         return;
       }
       await handlers.init(opts, globalOpts);
+    });
+
+  program
+    .command("version-sync")
+    .description("Synchronize info.version with the package version.")
+    .option("-f, --file <file...>", "Contract file(s) to synchronize. Defaults to config input.files.")
+    .option("--package-file <path>", "Package manifest to read the version from.", "package.json")
+    .option("--check", "Compare only and exit 9 when a contract file is out of sync.", false)
+    .action(async (opts, cmd) => {
+      const globalOpts = cmd.optsWithGlobals();
+      if (globalOpts.introspect) {
+        const policy = deriveCommandPolicy("version-sync", opts);
+        console.log(JSON.stringify(policy, null, 2));
+        return;
+      }
+      await handlers.versionSync(opts, globalOpts);
     });
 
   program

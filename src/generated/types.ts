@@ -15,6 +15,19 @@ export type InitExitResult =
   | { exitCode: 2; stderr: { code: string; message: string; details?: Record<string, unknown> } }
   | { exitCode: 4; stderr: { code: string; message: string; details?: Record<string, unknown> } };
 
+export interface VersionSyncOptions {
+  file?: string;
+  packageFile?: string;
+  check?: boolean;
+}
+
+export type VersionSyncExitCode = 0 | 1 | 9;
+
+export type VersionSyncExitResult =
+  { exitCode: 0; stdout: { packageVersion: string; checked: boolean; inSync: boolean; files: { file: string; contractVersion: string; packageVersion: string; status: "in-sync" | "updated" | "out-of-sync" }[] } }
+  | { exitCode: 1; stderr: { code: string; message: string; details?: Record<string, unknown> } }
+  | { exitCode: 9; stdout: { packageVersion: string; checked: boolean; inSync: boolean; files: { file: string; contractVersion: string; packageVersion: string; status: "in-sync" | "updated" | "out-of-sync" }[] } };
+
 export interface ValidateOptions {
   file?: string;
   strict?: boolean;
@@ -331,6 +344,20 @@ export interface Error {
 export interface InitResult {
   contractFile: string;
   configFile?: string;
+}
+
+export interface VersionSyncResult {
+  packageVersion: string;
+  checked: boolean;
+  inSync: boolean;
+  files: { file: string; contractVersion: string; packageVersion: string; status: "in-sync" | "updated" | "out-of-sync" }[];
+}
+
+export interface VersionSyncFile {
+  file: string;
+  contractVersion: string;
+  packageVersion: string;
+  status: "in-sync" | "updated" | "out-of-sync";
 }
 
 export interface ValidateResult {
