@@ -107,6 +107,6 @@ describe("--introspect in program.ts", () => {
     const ctx = normalizeContract(doc);
     const output = generateTypeScript(ctx);
     const program = output["program.ts"];
-    expect(program).toContain('import { commandDefinitions, deriveCommandPolicy } from "./policy.js"');
+    expect(program).toContain('import { deriveCommandPolicy } from "./policy.js"');
   });
 });
