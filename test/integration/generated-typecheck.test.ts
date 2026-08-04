@@ -105,23 +105,27 @@ describe("generated TypeScript compiles under a strict consumer tsconfig", () =>
     await rm(tmpDir, { recursive: true, force: true });
   });
 
-  it("compiles the strict-typecheck fixture with zero diagnostics", async () => {
-    await generateInto(tmpDir, "strict-typecheck-contract.yaml");
-    const files = await collectTsFiles(tmpDir);
-    expect(files.length).toBeGreaterThan(0);
+  /**
+   * Both branches of the effects gate need compiling: a contract with effects
+   * emits policy.ts plus the policy import into program.ts, and a contract
+   * without effects keeps the underscored action parameter shape.
+   */
+  const FIXTURES_UNDER_TEST = [
+    "strict-typecheck-contract.yaml",
+    "valid-contract.yaml",
+    "valid-contract-with-effects.yaml",
+  ];
 
-    const diagnostics = typecheck(files);
-    expect(diagnostics.join("\n")).toBe("");
-  });
+  for (const fixture of FIXTURES_UNDER_TEST) {
+    it(`compiles ${fixture} with zero diagnostics`, async () => {
+      await generateInto(tmpDir, fixture);
+      const files = await collectTsFiles(tmpDir);
+      expect(files.length).toBeGreaterThan(0);
 
-  it("compiles the valid-contract fixture with zero diagnostics", async () => {
-    await generateInto(tmpDir, "valid-contract.yaml");
-    const files = await collectTsFiles(tmpDir);
-    expect(files.length).toBeGreaterThan(0);
-
-    const diagnostics = typecheck(files);
-    expect(diagnostics.join("\n")).toBe("");
-  });
+      const diagnostics = typecheck(files);
+      expect(diagnostics.join("\n")).toBe("");
+    });
+  }
 
   it("merges allOf branches that re-declare a base property", async () => {
     await generateInto(tmpDir, "strict-typecheck-contract.yaml");
